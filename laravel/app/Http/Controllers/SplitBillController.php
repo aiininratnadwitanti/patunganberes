@@ -615,7 +615,7 @@ class SplitBillController extends Controller
             'sort_order' => 0,
         ]);
 
-        foreach ([['Rizka Amanda', '081298765432'], ['Dinda Kirana', '081345678901']] as $index => [$name, $phone]) {
+        foreach ([['Budi Santoso', '081298765432'], ['Dinda Kirana', '081345678901']] as $index => [$name, $phone]) {
             $bill->participants()->create([
                 'name' => $name,
                 'initials' => participant_initials($name),
@@ -697,7 +697,7 @@ class SplitBillController extends Controller
             'sort_order' => 0,
         ]);
 
-        foreach ([['Rizka Amanda', '081298765432'], ['Dinda Kirana', '081345678901']] as $index => [$name, $phone]) {
+        foreach ([['Budi Santoso', '081298765432'], ['Dinda Kirana', '081345678901']] as $index => [$name, $phone]) {
             $bill->participants()->create([
                 'name' => $name,
                 'initials' => participant_initials($name),

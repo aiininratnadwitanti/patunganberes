@@ -27,12 +27,12 @@ class GuestReceiptTest extends TestCase
             'total_price' => 25000,
         ]);
 
-        $participant = $bill->participants()->create(['name' => 'Rizka Amanda']);
+        $participant = $bill->participants()->create(['name' => 'Budi Santoso']);
 
         $this->get(route('guest.receipt', [$bill->code, $participant->public_token]))
             ->assertOk()
             ->assertSee('Struk Split Bill Personal')
-            ->assertSee('Rizka Amanda');
+            ->assertSee('Budi Santoso');
     }
 
     public function test_an_unknown_token_returns_not_found(): void

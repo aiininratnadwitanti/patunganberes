@@ -47,7 +47,7 @@ class SplitBillLifecycleTest extends TestCase
             'date' => now()->toDateString(),
             'participants' => [
                 ['id' => $owner->id, 'name' => $owner->name, 'is_current_user' => 1],
-                ['id' => $friend->id, 'name' => 'Rizka Amanda', 'is_current_user' => 0],
+                ['id' => $friend->id, 'name' => 'Budi Santoso', 'is_current_user' => 0],
             ],
         ])->assertRedirect(route('split-bills.allocation', $bill));
 

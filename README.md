@@ -102,7 +102,7 @@ php artisan migrate --seed
 
 | Email | Kata sandi |
 | --- | --- |
-| `rizka@patunganberes.test` | `password` |
+| `aiinin@patunganberes.test` | `password` |
 
 Akun tersebut berisi **2 split bill** (satu sudah dibagikan & punya pembayaran menunggu verifikasi, satu masih draft di tengah wizard) dan **1 iuran** dengan beberapa setoran. Seeder-nya idempoten (aman dijalankan berulang) dan boleh dilewati sepenuhnya bila kamu ingin memulai dari aplikasi kosong.
 
