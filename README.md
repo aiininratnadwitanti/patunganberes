@@ -1,8 +1,34 @@
 # PatunganBeres
 
+[![tests](https://github.com/aiininratnadwitanti/patunganberes/actions/workflows/tests.yml/badge.svg)](https://github.com/aiininratnadwitanti/patunganberes/actions/workflows/tests.yml)
+![Laravel](https://img.shields.io/badge/Laravel-12-FF2D20?logo=laravel&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?logo=php&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-007EC6)
+
 Aplikasi split bill dan iuran bersama: scan struk dengan AI, hitung PPN & service secara transparan, lalu bagikan struk digital personal ke tiap peserta.
 
 Aplikasi ini adalah **project Laravel 12** (MySQL) yang berada di dalam folder [`laravel/`](./laravel). Seluruh kode berada di sana (routes, controllers, models, Blade views, migrations, dan tests).
+
+## Preview
+
+<table>
+  <tr>
+    <td width="50%"><img src="laravel/docs/screenshots/01-dashboard.png" alt="Dashboard"><br><sub><b>Dashboard</b> — ringkasan patungan & aksi cepat</sub></td>
+    <td width="50%"><img src="laravel/docs/screenshots/02-scan-struk.png" alt="Scan struk"><br><sub><b>Scan struk</b> — foto struk, AI membaca itemnya</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="laravel/docs/screenshots/03-periksa-detail.png" alt="Periksa detail"><br><sub><b>Periksa detail</b> — koreksi item hasil scan</sub></td>
+    <td width="50%"><img src="laravel/docs/screenshots/04-bagi-item.png" alt="Bagi item"><br><sub><b>Bagi item</b> — per orang / bagi rata / per porsi</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="laravel/docs/screenshots/05-tagihan-link.png" alt="Tagihan & link"><br><sub><b>Tagihan & link</b> — link personal tiap peserta</sub></td>
+    <td width="50%"><img src="laravel/docs/screenshots/06-iuran.png" alt="Iuran bersama"><br><sub><b>Iuran bersama</b> — satu link form, progres terkumpul</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="laravel/docs/screenshots/07-struk-digital.png" alt="Struk digital"><br><sub><b>Struk digital</b> — tampilan peserta, tanpa akun</sub></td>
+    <td width="50%"><img src="laravel/docs/screenshots/08-profil.png" alt="Profil"><br><sub><b>Profil</b> — identitas & rekening tujuan transfer</sub></td>
+  </tr>
+</table>
 
 ## Fitur
 
@@ -89,7 +115,9 @@ cd laravel
 php artisan test
 ```
 
-Secara default test berjalan di SQLite in-memory agar cepat dan portabel. Untuk menjalankan terhadap MySQL, buat database test lalu set env:
+Secara default test berjalan di SQLite in-memory agar cepat dan portabel. Test yang sama juga dijalankan otomatis di CI (GitHub Actions) pada setiap push dan pull request.
+
+Untuk menjalankan terhadap MySQL, buat database test lalu set env:
 
 ```bash
 mysql -u root -e "CREATE DATABASE patunganberes_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
@@ -111,6 +139,7 @@ laravel/
 │   ├── migrations/
 │   ├── factories/
 │   └── seeders/
+├── docs/screenshots/       # Gambar untuk README
 ├── resources/views/        # Blade views (layouts, partials, halaman)
 ├── public/css|js           # Aset statis (CSS + Alpine.js, tanpa build step)
 ├── routes/web.php
@@ -123,6 +152,7 @@ laravel/
 - Frontend interaktif memakai **Alpine.js** dan **Tailwind (play CDN)**; tidak ada langkah build yang diperlukan.
 - Halaman publik `GET /receipt/{code}/{token}` menerima `code` tagihan dan `token` unik milik peserta, sehingga tautan tidak mudah ditebak.
 - Semua query dibatasi ke data milik pemakai yang login (isolasi antar akun diuji di test suite).
+- Endpoint publik (form setoran iuran, laporan pembayaran) dan login/register dibatasi rate limit.
 
 ## Lisensi
 
