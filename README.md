@@ -39,7 +39,7 @@ Aplikasi ini adalah **project Laravel 12** (MySQL) yang berada di dalam folder [
 - **Iuran bersama** — bagikan satu link form ke seluruh peserta; tiap orang mengisi nama, nominal, dan bukti setoran. Nominal langsung mengurangi sisa target, setoran boleh melebihi target (ditandai "Melebihi target"), lalu pembuat memverifikasi buktinya.
 - **Notifikasi, riwayat, arsip, duplikasi, dan profil rekening.**
 
-> Aplikasi ini **tidak menyertakan data contoh apa pun**. Semua akun dan data dibuat oleh pemakai lewat registrasi dan alur aplikasi.
+> Secara default aplikasi **tidak mengisi data apa pun** — semua akun dan data dibuat lewat registrasi dan alur aplikasi. Untuk mencoba cepat, ada **akun demo** opsional (lihat [Akun Demo](#akun-demo)).
 
 ## Persyaratan
 
@@ -80,13 +80,31 @@ DB_PASSWORD=
 ```bash
 php artisan migrate
 
+# Opsional: isi akun demo + data contoh (lihat bagian Akun Demo)
+php artisan db:seed
+
 # Tautan penyimpanan untuk foto struk & bukti pembayaran
 php artisan storage:link
 
 php artisan serve
 ```
 
-Buka <http://localhost:8000>, lalu **daftar akun baru** di halaman *Daftar*.
+Buka <http://localhost:8000>, lalu **masuk dengan akun demo** di bawah atau **daftar akun baru** di halaman *Daftar*.
+
+## Akun Demo
+
+Ingin langsung mencoba tanpa membangun data dari nol? Seeder demo menyiapkan satu akun siap pakai:
+
+```bash
+cd laravel
+php artisan migrate --seed
+```
+
+| Email | Kata sandi |
+| --- | --- |
+| `rizka@patunganberes.test` | `password` |
+
+Akun tersebut berisi **2 split bill** (satu sudah dibagikan & punya pembayaran menunggu verifikasi, satu masih draft di tengah wizard) dan **1 iuran** dengan beberapa setoran. Seeder-nya idempoten (aman dijalankan berulang) dan boleh dilewati sepenuhnya bila kamu ingin memulai dari aplikasi kosong.
 
 ## AI Receipt Scanner
 
