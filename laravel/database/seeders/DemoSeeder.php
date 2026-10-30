@@ -9,7 +9,7 @@ use Illuminate\Database\Seeder;
 
 class DemoSeeder extends Seeder
 {
-    public const EMAIL = 'rizka@patunganberes.test';
+    public const EMAIL = 'aiinin@patunganberes.test';
 
     public const PASSWORD = 'password';
 
@@ -26,7 +26,7 @@ class DemoSeeder extends Seeder
         $calc = app(SplitBillCalculator::class);
 
         $user = User::create([
-            'name' => 'Rizka Amanda',
+            'name' => 'Aiinin',
             'email' => self::EMAIL,
             'password' => self::PASSWORD,
             'phone' => '081234567890',
@@ -39,7 +39,7 @@ class DemoSeeder extends Seeder
         $user->bankAccounts()->create([
             'bank' => 'BCA',
             'account_number' => '8830192841',
-            'account_holder' => 'Rizka Amanda',
+            'account_holder' => 'Aiinin',
             'is_default' => true,
         ]);
 
@@ -78,7 +78,7 @@ class DemoSeeder extends Seeder
         }
 
         $people = [
-            ['Rizka Amanda', true],
+            ['Aiinin', true],
             ['Budi Santoso', false],
             ['Citra Dewi', false],
         ];
@@ -161,7 +161,7 @@ class DemoSeeder extends Seeder
             ]);
         }
 
-        foreach ([['Rizka Amanda', true], ['Dewi Lestari', false], ['Andi Pratama', false]] as $i => [$name, $isOwner]) {
+        foreach ([['Aiinin', true], ['Dewi Lestari', false], ['Andi Pratama', false]] as $i => [$name, $isOwner]) {
             $bill2->participants()->create([
                 'name' => $name,
                 'is_current_user' => $isOwner,
@@ -182,12 +182,12 @@ class DemoSeeder extends Seeder
             'category' => 'kas_kelas',
             'bank_name' => 'BCA',
             'account_number' => '8830192841',
-            'account_holder' => 'Rizka Amanda',
+            'account_holder' => 'Aiinin',
             'status' => 'active',
         ]);
 
         foreach ([
-            ['Rizka Amanda', 100000, 'paid'],
+            ['Aiinin', 100000, 'paid'],
             ['Budi Santoso', 100000, 'waiting_verification'],
             ['Citra Dewi', 100000, 'waiting_verification'],
             ['Dewi Lestari', 100000, 'paid'],

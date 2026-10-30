@@ -128,7 +128,7 @@
                         </div>
                         <div>
                             <label class="label" for="notes">Catatan (opsional)</label>
-                            <input class="input" type="text" id="notes" name="notes" value="{{ old('notes') }}" placeholder="contoh: transfer via BCA Mobile a.n Rizka">
+                            <input class="input" type="text" id="notes" name="notes" value="{{ old('notes') }}" placeholder="contoh: transfer via BCA Mobile a.n Budi">
                         </div>
                         <div>
                             <label class="label" for="proof">Upload Ulang Bukti (opsional)</label>
@@ -166,7 +166,7 @@
                         </div>
                         <div>
                             <label class="label" for="notes">Catatan (opsional)</label>
-                            <input class="input" type="text" id="notes" name="notes" value="{{ old('notes') }}" placeholder="contoh: transfer via BCA Mobile a.n Rizka">
+                            <input class="input" type="text" id="notes" name="notes" value="{{ old('notes') }}" placeholder="contoh: transfer via BCA Mobile a.n Budi">
                         </div>
                         <div>
                             <label class="label" for="proof">Bukti Transfer (opsional)</label>

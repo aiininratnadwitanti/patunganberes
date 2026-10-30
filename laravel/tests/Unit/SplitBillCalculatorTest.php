@@ -24,7 +24,7 @@ class SplitBillCalculatorTest extends TestCase
             ],
             'participants' => [
                 ['id' => 1, 'name' => 'Aiinin'],
-                ['id' => 2, 'name' => 'Rizka'],
+                ['id' => 2, 'name' => 'Budi'],
             ],
             'allocations' => [
                 ['item_id' => 1, 'type' => 'single', 'single_participant_id' => 1],
