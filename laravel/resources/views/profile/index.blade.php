@@ -50,15 +50,38 @@
                     <p class="mt-0.5 text-[10.5px] text-muted">Nama ini akan muncul sebagai pembuat tagihan.</p>
                 </div>
 
-                <form method="POST" action="{{ route('profile.update') }}" class="mt-4 space-y-3" x-data="{ avatar: @js($user->avatar_url) }">
+                <form method="POST" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="mt-4 space-y-3"
+                      x-data="{
+                          preview: @js($user->avatar),
+                          defaultAvatar: @js(\App\Models\User::DEFAULT_AVATAR),
+                          fileName: '',
+                          removed: false,
+                      }">
                     @csrf
                     @method('PUT')
 
-                    <div class="flex items-center gap-3 rounded-2xl border border-line p-3">
-                        <img :src="avatar || @js($user->avatar)" alt="Avatar" class="h-12 w-12 rounded-xl object-cover">
-                        <div class="min-w-0 flex-1">
-                            <label class="label" for="avatar_url">URL Foto Profil</label>
-                            <input class="input input-sm" type="url" id="avatar_url" name="avatar_url" x-model="avatar" value="{{ old('avatar_url', $user->avatar_url) }}" placeholder="https://...">
+                    <div class="rounded-2xl border border-line p-3.5">
+                        <p class="label">Foto Profil</p>
+                        <div class="mt-2 flex items-start gap-3.5">
+                            <img :src="preview" alt="Avatar" class="h-16 w-16 shrink-0 rounded-2xl object-cover ring-2 ring-light">
+                            <div class="min-w-0 flex-1">
+                                <input type="file" id="avatar" name="avatar" x-ref="avatar" accept="image/png,image/jpeg,image/webp" class="hidden"
+                                       @change="const f = $event.target.files[0]; if (f) { fileName = f.name; removed = false; const r = new FileReader(); r.onload = (e) => preview = e.target.result; r.readAsDataURL(f); }">
+                                <input type="hidden" name="remove_avatar" :value="removed ? 1 : 0">
+
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button type="button" class="btn btn-outline btn-sm" @click="$refs.avatar.click()">
+                                        <i data-lucide="image-up" class="h-3.5 w-3.5"></i> Pilih Foto
+                                    </button>
+                                    <button type="button" class="btn btn-ghost btn-sm text-danger" x-show="preview !== defaultAvatar" x-cloak
+                                            @click="preview = defaultAvatar; fileName = ''; removed = true; $refs.avatar.value = ''">
+                                        <i data-lucide="trash-2" class="h-3.5 w-3.5"></i> Hapus Foto
+                                    </button>
+                                </div>
+
+                                <p class="mt-1.5 truncate text-[9.5px] font-semibold text-primary-dark" x-show="fileName" x-cloak x-text="'Terpilih: ' + fileName"></p>
+                                <p class="mt-1 text-[9.5px] text-muted" x-show="!fileName" x-text="'JPG/PNG/WebP, maks 5MB.'"></p>
+                            </div>
                         </div>
                     </div>
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\BankAccount;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -25,10 +26,21 @@ class ProfileController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'email', 'max:150', Rule::unique('users', 'email')->ignore($user->id)],
             'phone' => ['nullable', 'string', 'max:30'],
-            'avatar_url' => ['nullable', 'url', 'max:500'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'remove_avatar' => ['nullable', 'boolean'],
             'preferred_currency' => ['required', 'string', 'max:10'],
             'default_rounding' => ['required', Rule::in(['nearest_100', 'nearest_500', 'nearest_1000', 'none'])],
         ]);
+
+        unset($data['avatar'], $data['remove_avatar']);
+
+        if ($request->hasFile('avatar')) {
+            $data['avatar_url'] = $request->file('avatar')->store('avatars', 'public');
+            $this->deleteStoredAvatar($user->avatar_url);
+        } elseif ($request->boolean('remove_avatar')) {
+            $data['avatar_url'] = null;
+            $this->deleteStoredAvatar($user->avatar_url);
+        }
 
         $user->update($data);
 
@@ -106,5 +118,12 @@ class ProfileController extends Controller
     {
         $user->bankAccounts()->update(['is_default' => false]);
         $account->update(['is_default' => true]);
+    }
+
+    private function deleteStoredAvatar(?string $path): void
+    {
+        if ($path && ! str_starts_with($path, 'http')) {
+            Storage::disk('public')->delete($path);
+        }
     }
 }

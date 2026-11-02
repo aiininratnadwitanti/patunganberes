@@ -11,6 +11,8 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
+    public const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80';
+
     protected $fillable = [
         'name',
         'email',
@@ -70,7 +72,12 @@ class User extends Authenticatable
 
     public function getAvatarAttribute(): string
     {
-        return $this->avatar_url
-            ?: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80';
+        if ($this->avatar_url) {
+            return str_starts_with($this->avatar_url, 'http')
+                ? $this->avatar_url
+                : asset('storage/'.$this->avatar_url);
+        }
+
+        return self::DEFAULT_AVATAR;
     }
 }
