@@ -1,5 +1,10 @@
 <header class="sticky top-0 z-30 border-b border-line/80 bg-bg/85 backdrop-blur-xl">
-    <div class="mx-auto flex w-full max-w-[1440px] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+    <div class="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6 lg:px-8">
+        <a href="{{ route('dashboard') }}" class="flex shrink-0 items-center gap-2.5" aria-label="PatunganBeres">
+            <span class="brand-mark"><i data-lucide="receipt-text" class="h-5 w-5"></i></span>
+            <span class="text-[15px] font-extrabold tracking-tight text-ink">PATUNGAN<span class="text-primary">BERES</span></span>
+        </a>
+
         <div class="ml-auto flex shrink-0 items-center gap-2">
             <span class="hidden items-center gap-1.5 rounded-full border border-line bg-white px-3 py-1.5 text-[11px] font-semibold text-muted sm:flex">
                 <i data-lucide="calendar-days" class="h-3.5 w-3.5 text-primary"></i>
@@ -60,5 +65,4 @@
             </a>
         </div>
     </div>
-
 </header>
