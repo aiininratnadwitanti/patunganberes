@@ -41,6 +41,38 @@
         </div>
     </section>
 
+    @if (count($settlement['transfers']) > 0)
+        <section class="card overflow-hidden">
+            <div class="flex items-center justify-between border-b border-line px-4 py-3">
+                <div>
+                    <h3 class="text-[13px] font-extrabold text-ink">Rekap Transfer</h3>
+                    <p class="mt-0.5 text-[10.5px] text-muted">Siapa transfer ke siapa agar semua orang pas.</p>
+                </div>
+                <span class="badge badge-neutral">{{ count($settlement['transfers']) }} transfer</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-[10.5px]">
+                    <thead class="bg-[#f8faf9] text-left text-[9.5px] uppercase tracking-wide text-muted">
+                        <tr>
+                            <th class="px-4 py-2 font-bold">Dari</th>
+                            <th class="px-4 py-2 font-bold">Kepada</th>
+                            <th class="px-4 py-2 text-right font-bold">Jumlah</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-line">
+                        @foreach ($settlement['transfers'] as $transfer)
+                            <tr>
+                                <td class="px-4 py-2 font-semibold text-ink">{{ $transfer['from_name'] }}</td>
+                                <td class="px-4 py-2 font-semibold text-ink">{{ $transfer['to_name'] }}</td>
+                                <td class="px-4 py-2 text-right font-bold text-primary-dark hash">{{ format_rupiah($transfer['amount']) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    @endif
+
     <div class="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
         <div class="space-y-3">
             <div class="flex items-center justify-between gap-2">
@@ -56,6 +88,9 @@
                     $share = $bill->shareFor($participant);
                     $waUrl = $share ? whatsapp_url(split_bill_whatsapp_message($bill, $share, $defaultBank)) : '#';
                     $guestUrl = guest_receipt_url($bill, $participant);
+                    $bal = $settlement['balances'][$participant->id] ?? null;
+                    $paidAmount = $bal['paid'] ?? ($share?->paid_amount ?? 0);
+                    $balance = $bal['balance'] ?? (($share?->paid_amount ?? 0) - ($share?->final_total ?? 0));
                 @endphp
 
                 <article class="card p-3.5 sm:p-4 {{ $participant->is_current_user ? 'border-primary/25' : '' }}">
@@ -69,6 +104,15 @@
                                 @endif
                             </div>
                             <p class="mt-0.5 text-[10px] font-medium text-muted">{{ $share ? count($share->items_list ?? []) : 0 }} item · {{ $participant->phone_or_wa ?: 'Tanpa nomor WA' }}</p>
+                            <p class="mt-0.5 text-[10px] font-medium text-muted">Dibayar {{ format_rupiah($paidAmount) }} ·
+                                @if ($balance < 0)
+                                    <span class="font-bold text-warning">Kurang {{ format_rupiah(-$balance) }}</span>
+                                @elseif ($balance > 0)
+                                    <span class="font-bold text-primary-dark">Kembali {{ format_rupiah($balance) }}</span>
+                                @else
+                                    <span class="font-semibold text-muted">Lunas</span>
+                                @endif
+                            </p>
                         </div>
                         <div class="text-right">
                             <p class="text-[15px] font-extrabold text-ink hash">{{ format_rupiah($share?->final_total ?? 0) }}</p>

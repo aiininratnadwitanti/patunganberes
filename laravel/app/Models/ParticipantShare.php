@@ -11,6 +11,7 @@ class ParticipantShare extends Model
         'split_bill_id',
         'bill_participant_id',
         'items_subtotal',
+        'paid_amount',
         'discount_share',
         'tax_share',
         'service_share',
@@ -24,6 +25,7 @@ class ParticipantShare extends Model
     {
         return [
             'items_subtotal' => 'integer',
+            'paid_amount' => 'integer',
             'discount_share' => 'integer',
             'tax_share' => 'integer',
             'service_share' => 'integer',
@@ -47,5 +49,10 @@ class ParticipantShare extends Model
     public function getParticipantNameAttribute(): string
     {
         return $this->participant?->name ?? 'Peserta';
+    }
+
+    public function getBalanceAttribute(): int
+    {
+        return (int) $this->paid_amount - (int) $this->final_total;
     }
 }

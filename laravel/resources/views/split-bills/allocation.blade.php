@@ -19,6 +19,7 @@
             'color' => $participant->color,
         ])->values()->all(),
         'allocations' => $initialAllocations,
+        'defaultPayerId' => $defaultPayerId,
         'tax' => $bill->is_tax_included ? 0 : $bill->tax_amount,
         'service' => $bill->service_charge_amount,
         'discount' => $bill->discount_amount,
@@ -45,7 +46,18 @@
                     <p class="mt-0.5 text-[10.5px] font-semibold text-primary-dark">Semua item otomatis dibagi rata ke semua peserta — ubah hanya yang perlu.</p>
                     <p class="mt-0.5 text-[10.5px] text-muted">Item yang belum dibagi tidak akan masuk tagihan siapa pun.</p>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <label class="flex items-center gap-1.5 text-[10px] font-bold text-muted">
+                        Semua dibayar oleh
+                        <select class="input input-sm w-auto" x-model.number="bulkPayer">
+                            <template x-for="participant in participants" :key="'bulk-' + participant.id">
+                                <option :value="participant.id" x-text="participant.name || 'Tanpa nama'"></option>
+                            </template>
+                        </select>
+                    </label>
+                    <button type="button" class="btn btn-ghost btn-sm" @click="applyPayerAll(bulkPayer)">
+                        <i data-lucide="wallet" class="h-3.5 w-3.5"></i> Terapkan
+                    </button>
                     <button type="button" class="btn btn-ghost btn-sm" @click="applyEqualAll()">
                         <i data-lucide="users" class="h-3.5 w-3.5"></i> Bagi Rata Semua
                     </button>
@@ -98,6 +110,11 @@
                                 </p>
                             </div>
 
+                            <p class="mt-2 flex items-start gap-1.5 rounded-lg bg-[#f8faf9] px-2.5 py-1.5 text-[9.5px] leading-relaxed text-muted">
+                                <i data-lucide="info" class="mt-0.5 h-3 w-3 shrink-0 text-primary"></i>
+                                <span x-text="typeHint(allocations[item.id].type)"></span>
+                            </p>
+
                             <div class="mt-3" x-show="allocations[item.id].type === 'single'">
                                 <label class="text-[9.5px] font-bold uppercase tracking-wide text-muted">Ditanggung oleh</label>
                                 <select class="input input-sm mt-1" @change="setSingle(item, Number($event.target.value))">
@@ -135,6 +152,16 @@
                                 <p class="text-[9.5px] leading-relaxed text-muted" x-show="assignedQty(item) < item.quantity">
                                     Masih ada <span class="font-bold text-warning" x-text="item.quantity - assignedQty(item)"></span> porsi yang belum dibagi.
                                 </p>
+                            </div>
+
+                            <div class="mt-3 flex items-center gap-2 border-t border-dashed border-line pt-3">
+                                <i data-lucide="wallet" class="h-3.5 w-3.5 text-muted"></i>
+                                <label class="text-[9.5px] font-bold uppercase tracking-wide text-muted">Dibayar pakai uang</label>
+                                <select class="input input-sm ml-auto w-auto min-w-[130px]" @change="setPayer(item, Number($event.target.value))">
+                                    <template x-for="participant in participants" :key="'payer-' + item.id + '-' + participant.id">
+                                        <option :value="participant.id" :selected="allocations[item.id].payer === participant.id" x-text="participant.name || 'Tanpa nama'"></option>
+                                    </template>
+                                </select>
                             </div>
                         </div>
                     </section>
@@ -184,6 +211,25 @@
                         <span class="text-[10.5px] font-extrabold text-ink hash" x-text="money(allocatedTotal())"></span>
                     </div>
                 </div>
+            </div>
+
+            <div class="card mt-3 p-4">
+                <div class="flex items-center justify-between">
+                    <p class="text-[10.5px] font-bold uppercase tracking-[0.1em] text-muted">Siapa bayar ke siapa</p>
+                    <span class="text-[9px] font-semibold text-muted">netting otomatis</span>
+                </div>
+                <div class="mt-2.5 space-y-1.5">
+                    <template x-for="(transfer, idx) in settlements().transfers" :key="'trf-' + idx">
+                        <div class="flex items-center justify-between gap-2 text-[10.5px]">
+                            <span class="min-w-0 truncate font-semibold text-ink"><span x-text="transfer.from.name"></span> <span class="text-muted">→</span> <span x-text="transfer.to.name"></span></span>
+                            <span class="shrink-0 font-extrabold text-ink hash" x-text="money(transfer.amount)"></span>
+                        </div>
+                    </template>
+                    <template x-if="settlements().transfers.length === 0">
+                        <p class="text-[10px] text-muted">Belum ada yang perlu transfer.</p>
+                    </template>
+                </div>
+                <p class="mt-2 text-[9px] leading-relaxed text-muted">Dihitung dari selisih uang yang dibayar vs jatah tiap orang.</p>
             </div>
 
             <div class="card mt-3 p-4">

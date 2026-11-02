@@ -4,6 +4,7 @@ use App\Models\BankAccount;
 use App\Models\BillParticipant;
 use App\Models\ParticipantShare;
 use App\Models\SplitBill;
+use App\Services\SplitBillCalculator;
 
 if (! function_exists('format_rupiah')) {
     function format_rupiah(mixed $amount): string
@@ -154,8 +155,28 @@ if (! function_exists('split_bill_whatsapp_message')) {
             $feesText .= "\n- Pembulatan: ".format_rupiah($share->rounding_adjustment);
         }
 
+        $settlement = app(SplitBillCalculator::class)->settlementForBill($splitBill);
+        $balance = $settlement['balances'][$share->bill_participant_id]['balance'] ?? null;
+
+        $transferText = '';
+        if ($balance !== null && $balance < 0) {
+            $targets = collect($settlement['transfers'])
+                ->where('from_id', $share->bill_participant_id)
+                ->map(fn (array $t) => '- '.$t['to_name'].': '.format_rupiah($t['amount']))
+                ->implode("\n");
+
+            $transferText = "\n\n*Kamu kurang ".format_rupiah(-$balance).". Transfer ke:*\n".$targets;
+        } elseif ($balance !== null && $balance > 0) {
+            $sources = collect($settlement['transfers'])
+                ->where('to_id', $share->bill_participant_id)
+                ->map(fn (array $t) => '- '.$t['from_name'].': '.format_rupiah($t['amount']))
+                ->implode("\n");
+
+            $transferText = "\n\n*Kamu menerima kembali ".format_rupiah($balance)." dari:*\n".$sources;
+        }
+
         $bankText = '';
-        if ($bankInfo && $bankInfo->account_number) {
+        if ($bankInfo && $bankInfo->account_number && ($balance === null || $balance < 0)) {
             $bankText = "\n\n*Rekening Pembayaran:*\n".$bankInfo->bank.' : *'.$bankInfo->account_number."*\na.n ".$bankInfo->account_holder;
         }
 
@@ -175,6 +196,7 @@ if (! function_exists('split_bill_whatsapp_message')) {
             .($itemLines ?: '- (Item bersama)')
             ."{$feesText}\n\n"
             .'*TOTAL TAGIHAN: '.format_rupiah($share->final_total).'*'
+            .$transferText
             .$bankText.$linkText
             ."\n\n_Catatan: Struk digital resmi dibagikan melalui aplikasi PatunganBeres._\n"
             .'Terima kasih!';

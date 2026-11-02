@@ -23,7 +23,7 @@ class SplitBillFlowTest extends TestCase
         $this->assertNotNull($bill);
         $this->assertSame('draft', $bill->status);
         $this->assertGreaterThanOrEqual(1, $bill->items()->count());
-        $this->assertGreaterThanOrEqual(1, $bill->participants()->count());
+        $this->assertSame(0, $bill->participants()->count());
     }
 
     public function test_a_user_cannot_view_another_users_bill(): void

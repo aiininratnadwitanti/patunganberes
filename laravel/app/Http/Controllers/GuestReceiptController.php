@@ -31,6 +31,7 @@ class GuestReceiptController extends Controller
             'participant' => $participant,
             'share' => $share,
             'defaultBank' => $bill->user?->defaultBankAccount(),
+            'settlement' => $this->calculator->settlementForBill($bill),
         ]);
     }
 

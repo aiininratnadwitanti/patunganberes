@@ -146,6 +146,7 @@ class SplitBillController extends Controller
         return view('split-bills.show', [
             'bill' => $splitBill,
             'defaultBank' => auth()->user()->defaultBankAccount(),
+            'settlement' => $this->calculator->settlementForBill($splitBill),
         ]);
     }
 
@@ -320,14 +321,19 @@ class SplitBillController extends Controller
             return [$allocation->receipt_item_id => [
                 'type' => $allocation->type,
                 'single_participant_id' => $allocation->single_participant_id,
+                'payer_participant_id' => $allocation->payer_participant_id,
                 'shared_participant_ids' => $allocation->shared_participant_ids ?? [],
                 'portion_assignments' => $allocation->portion_assignments ?? [],
             ]];
         });
 
+        $defaultPayer = $splitBill->participants->firstWhere('is_current_user', true)
+            ?? $splitBill->participants->first();
+
         return view('split-bills.allocation', [
             'bill' => $splitBill,
             'initialAllocations' => $allocations,
+            'defaultPayerId' => $defaultPayer?->id,
         ]);
     }
 
@@ -368,6 +374,10 @@ class SplitBillController extends Controller
                     ? (int) $allocation['single_participant_id']
                     : null;
 
+                $payerId = isset($allocation['payer_participant_id']) && in_array((int) $allocation['payer_participant_id'], $participantIds, true)
+                    ? (int) $allocation['payer_participant_id']
+                    : null;
+
                 $sharedIds = collect($allocation['shared_participant_ids'] ?? [])
                     ->map(fn ($id) => (int) $id)
                     ->filter(fn ($id) => in_array($id, $participantIds, true))
@@ -399,6 +409,7 @@ class SplitBillController extends Controller
                     'receipt_item_id' => (int) $itemId,
                     'type' => $type,
                     'single_participant_id' => $type === 'single' ? $singleId : null,
+                    'payer_participant_id' => $payerId,
                     'shared_participant_ids' => $type === 'shared_equal' ? $sharedIds : [],
                     'portion_assignments' => $type === 'by_portion' ? $portions : [],
                 ]);
@@ -494,6 +505,7 @@ class SplitBillController extends Controller
         return view('split-bills.receipts', [
             'bill' => $splitBill,
             'defaultBank' => auth()->user()->defaultBankAccount(),
+            'settlement' => $this->calculator->settlementForBill($splitBill),
         ]);
     }
 
@@ -604,29 +616,6 @@ class SplitBillController extends Controller
             'sort_order' => 0,
         ]);
 
-        $bill->participants()->create([
-            'name' => $user->name,
-            'initials' => participant_initials($user->name),
-            'color' => '#16A34A',
-            'is_current_user' => true,
-            'payment_status' => 'paid',
-            'paid_at' => now(),
-            'phone_or_wa' => $user->phone,
-            'sort_order' => 0,
-        ]);
-
-        foreach ([['Budi Santoso', '081298765432'], ['Dinda Kirana', '081345678901']] as $index => [$name, $phone]) {
-            $bill->participants()->create([
-                'name' => $name,
-                'initials' => participant_initials($name),
-                'color' => participant_color($index + 1),
-                'is_current_user' => false,
-                'payment_status' => 'unpaid',
-                'phone_or_wa' => $phone,
-                'sort_order' => $index + 1,
-            ]);
-        }
-
         return $bill;
     }
 
@@ -683,29 +672,6 @@ class SplitBillController extends Controller
                 'total_price' => 0,
                 'confidence' => 'high',
                 'sort_order' => 0,
-            ]);
-        }
-
-        $bill->participants()->create([
-            'name' => $user->name,
-            'initials' => participant_initials($user->name),
-            'color' => '#16A34A',
-            'is_current_user' => true,
-            'payment_status' => 'paid',
-            'paid_at' => now(),
-            'phone_or_wa' => $user->phone,
-            'sort_order' => 0,
-        ]);
-
-        foreach ([['Budi Santoso', '081298765432'], ['Dinda Kirana', '081345678901']] as $index => [$name, $phone]) {
-            $bill->participants()->create([
-                'name' => $name,
-                'initials' => participant_initials($name),
-                'color' => participant_color($index + 1),
-                'is_current_user' => false,
-                'payment_status' => 'unpaid',
-                'phone_or_wa' => $phone,
-                'sort_order' => $index + 1,
             ]);
         }
 

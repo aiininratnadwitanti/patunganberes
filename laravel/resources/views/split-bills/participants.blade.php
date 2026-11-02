@@ -26,7 +26,8 @@
     @endif
 
     <div class="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
-        <form method="POST" action="{{ route('split-bills.participants.update', $bill) }}" class="space-y-4">
+        <form method="POST" action="{{ route('split-bills.participants.update', $bill) }}" class="space-y-4"
+              @submit="if (participants.length === 0) { $event.preventDefault(); window.toast('warning', 'Tambahkan minimal satu peserta dulu ya.'); }">
             @csrf
             @method('PUT')
 
@@ -50,12 +51,19 @@
                 <div class="flex items-start justify-between gap-3">
                     <div>
                         <h2 class="text-[15px] font-extrabold tracking-tight text-ink">Daftar Peserta</h2>
-                        <p class="mt-0.5 text-[11px] text-muted">Namamu diambil otomatis dari profil. Sisanya adalah teman yang ikut patungan.</p>
+                        <p class="mt-0.5 text-[11px] text-muted">Tambahkan semua orang yang ikut patungan. Nama yang sama dengan profilmu otomatis ditandai "Saya".</p>
                     </div>
                     <span class="badge badge-success"><span x-text="participants.length"></span> orang</span>
                 </div>
 
                 <div class="mt-4 space-y-2">
+                    <template x-if="participants.length === 0">
+                        <div class="flex items-start gap-2.5 rounded-2xl border border-dashed border-line bg-[#f8faf9] p-3.5">
+                            <i data-lucide="users" class="mt-0.5 h-4 w-4 shrink-0 text-muted"></i>
+                            <p class="text-[11px] leading-relaxed text-muted">Belum ada peserta. Tambahkan nama di kotak bawah — mulai dari namamu sendiri.</p>
+                        </div>
+                    </template>
+
                     <template x-for="(participant, index) in participants" :key="participant.uid">
                         <div class="flex items-center gap-2.5 rounded-2xl border border-line p-2.5 transition"
                              :class="participant.is_current_user ? 'border-primary/40 bg-light/30' : ''">
@@ -110,7 +118,7 @@
                     </div>
                     <div class="mt-2 flex items-center justify-between text-[11.5px]">
                         <span class="font-medium text-muted">Rata-rata per orang</span>
-                        <span class="font-extrabold text-ink hash" x-text="'Rp' + Math.round({{ $bill->grand_total }} / Math.max(participants.length, 1)).toLocaleString('id-ID')"></span>
+                        <span class="font-extrabold text-ink hash" x-text="participants.length ? 'Rp' + Math.round({{ $bill->grand_total }} / participants.length).toLocaleString('id-ID') : '—'"></span>
                     </div>
                     <p class="mt-2 text-[10px] leading-relaxed text-muted">Angka rata-rata hanya perkiraan. Pembagian final menyesuaikan item yang dipilih tiap orang.</p>
 

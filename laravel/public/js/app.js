@@ -159,30 +159,28 @@ window.participantsEditor = function (config = {}) {
     }
 
     return {
-        participants: participants.length ? participants : [{ uid: ++participantUid, id: null, name: config.defaultName || '', is_current_user: true, color: palette[0] }],
+        participants,
         newName: '',
         add() {
             const name = this.newName.trim();
             if (!name) {
                 return;
             }
+            const isOwner = ownerName !== '' && name.toLowerCase() === ownerName
+                && !this.participants.some((participant) => participant.is_current_user);
             this.participants.push({
                 uid: ++participantUid,
                 id: null,
                 name,
-                is_current_user: false,
+                is_current_user: isOwner,
                 color: palette[this.participants.length % palette.length],
             });
             this.newName = '';
         },
         remove(index) {
-            if (this.participants.length <= 1) {
-                window.toast('warning', 'Minimal satu peserta harus ada.');
-                return;
-            }
             const wasCurrent = this.participants[index].is_current_user;
             this.participants.splice(index, 1);
-            if (wasCurrent) {
+            if (wasCurrent && this.participants.length) {
                 this.participants[0].is_current_user = true;
             }
         },
@@ -214,6 +212,7 @@ window.allocationWizard = function (config = {}) {
     }));
 
     const initial = config.allocations || {};
+    const defaultPayerId = config.defaultPayerId ? Number(config.defaultPayerId) : (participants[0]?.id ?? null);
     const store = {};
 
     items.forEach((item) => {
@@ -229,6 +228,7 @@ window.allocationWizard = function (config = {}) {
         store[item.id] = {
             type: saved && saved.type ? saved.type : 'shared_equal',
             single: saved && saved.single_participant_id ? Number(saved.single_participant_id) : (participants[0]?.id ?? null),
+            payer: saved && saved.payer_participant_id ? Number(saved.payer_participant_id) : defaultPayerId,
             shared: saved && Array.isArray(saved.shared_participant_ids) && saved.shared_participant_ids.length
                 ? saved.shared_participant_ids.map(Number)
                 : participants.map((participant) => participant.id),
@@ -240,6 +240,8 @@ window.allocationWizard = function (config = {}) {
         items,
         participants,
         allocations: store,
+        defaultPayerId,
+        bulkPayer: defaultPayerId,
         tax: Number(config.tax || 0),
         service: Number(config.service || 0),
         discount: Number(config.discount || 0),
@@ -268,6 +270,17 @@ window.allocationWizard = function (config = {}) {
             }
         },
 
+        typeHint(type) {
+            switch (type) {
+                case 'single':
+                    return 'Seluruh item ini ditanggung satu orang.';
+                case 'by_portion':
+                    return 'Dibagi sesuai jumlah porsi yang diambil tiap orang.';
+                default:
+                    return 'Dibagi sama rata ke orang-orang yang dipilih.';
+            }
+        },
+
         toggleShared(item, participantId) {
             const allocation = this.allocations[item.id];
             const index = allocation.shared.indexOf(participantId);
@@ -285,6 +298,24 @@ window.allocationWizard = function (config = {}) {
 
         setSingle(item, participantId) {
             this.allocations[item.id].single = participantId;
+        },
+
+        setPayer(item, participantId) {
+            this.allocations[item.id].payer = Number(participantId);
+        },
+
+        applyPayerAll(participantId) {
+            const id = Number(participantId);
+            this.items.forEach((item) => {
+                this.allocations[item.id].payer = id;
+            });
+        },
+
+        payerName(item) {
+            const id = this.allocations[item.id].payer;
+            const found = this.participants.find((participant) => participant.id === id);
+
+            return found ? found.name : '—';
         },
 
         portion(item, participantId) {
@@ -344,6 +375,7 @@ window.allocationWizard = function (config = {}) {
                 this.allocations[item.id] = {
                     type: 'shared_equal',
                     single: this.participants[0]?.id ?? null,
+                    payer: this.defaultPayerId,
                     shared: [],
                     portions: {},
                 };
@@ -359,6 +391,7 @@ window.allocationWizard = function (config = {}) {
                 result[item.id] = {
                     type: allocation.type,
                     single_participant_id: allocation.type === 'single' ? allocation.single : null,
+                    payer_participant_id: allocation.payer,
                     shared_participant_ids: allocation.type === 'shared_equal' ? allocation.shared : [],
                     portion_assignments: allocation.type === 'by_portion'
                         ? Object.entries(allocation.portions)
@@ -501,6 +534,84 @@ window.allocationWizard = function (config = {}) {
 
         allocatedTotal() {
             return this.perPersonTotals().reduce((sum, entry) => sum + entry.final_total, 0);
+        },
+
+        // Mirrors SplitBillCalculator::distributeFeesToPayers() + computeSettlements()
+        // so the live "siapa bayar ke siapa" preview matches what the server stores.
+        settlements() {
+            const perPerson = this.perPersonTotals();
+            const grand = perPerson.reduce((sum, entry) => sum + entry.final_total, 0);
+
+            let allItemsTotal = 0;
+            const paid = {};
+            this.participants.forEach((participant) => {
+                paid[participant.id] = 0;
+            });
+
+            this.items.forEach((item) => {
+                allItemsTotal += Number(item.total_price);
+                const payer = this.allocations[item.id]?.payer ?? this.defaultPayerId;
+                if (payer !== null && payer !== undefined && paid[payer] !== undefined) {
+                    paid[payer] += Number(item.total_price);
+                }
+            });
+
+            const netFees = grand - allItemsTotal;
+            const totalWeight = Object.values(paid).reduce((sum, value) => sum + value, 0);
+
+            if (netFees !== 0) {
+                if (totalWeight > 0) {
+                    const keys = Object.keys(paid);
+                    const last = keys[keys.length - 1];
+                    let allocated = 0;
+                    keys.forEach((key) => {
+                        if (key === last) {
+                            paid[key] += netFees - allocated;
+                        } else {
+                            const part = Math.round((paid[key] / totalWeight) * netFees);
+                            paid[key] += part;
+                            allocated += part;
+                        }
+                    });
+                } else {
+                    const first = Object.keys(paid)[0];
+                    if (first !== undefined) {
+                        paid[first] += netFees;
+                    }
+                }
+            }
+
+            const balances = perPerson.map((entry) => {
+                const id = entry.participant.id;
+                const paidAmount = paid[id] || 0;
+
+                return {
+                    participant: entry.participant,
+                    paid: paidAmount,
+                    owed: entry.final_total,
+                    balance: paidAmount - entry.final_total,
+                };
+            });
+
+            const debtors = balances.filter((b) => b.balance < 0).map((b) => ({ ...b })).sort((a, b) => a.balance - b.balance);
+            const creditors = balances.filter((b) => b.balance > 0).map((b) => ({ ...b })).sort((a, b) => b.balance - a.balance);
+
+            const transfers = [];
+            let i = 0;
+            let j = 0;
+
+            while (i < debtors.length && j < creditors.length) {
+                const amount = Math.min(-debtors[i].balance, creditors[j].balance);
+                if (amount > 0) {
+                    transfers.push({ from: debtors[i].participant, to: creditors[j].participant, amount });
+                }
+                debtors[i].balance += amount;
+                creditors[j].balance -= amount;
+                if (debtors[i].balance >= 0) i++;
+                if (creditors[j].balance <= 0) j++;
+            }
+
+            return { balances, transfers };
         },
 
         money(value) {

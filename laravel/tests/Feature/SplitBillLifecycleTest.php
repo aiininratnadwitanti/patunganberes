@@ -38,21 +38,21 @@ class SplitBillLifecycleTest extends TestCase
         $this->assertSame(50000, $bill->subtotal);
         $this->assertSame(65000, $bill->grand_total);
 
-        // 3. Trim the participant list down to two people.
-        $participants = $bill->participants()->get();
-        [$owner, $friend] = [$participants[0], $participants[1]];
-
+        // 3. Add two participants (a new bill starts with an empty list).
         $this->put(route('split-bills.participants.update', $bill), [
             'title' => 'Makan Siang Tim',
             'date' => now()->toDateString(),
             'participants' => [
-                ['id' => $owner->id, 'name' => $owner->name, 'is_current_user' => 1],
-                ['id' => $friend->id, 'name' => 'Budi Santoso', 'is_current_user' => 0],
+                ['id' => null, 'name' => $user->name, 'is_current_user' => 1],
+                ['id' => null, 'name' => 'Budi Santoso', 'is_current_user' => 0],
             ],
         ])->assertRedirect(route('split-bills.allocation', $bill));
 
         $bill->refresh();
         $this->assertSame(2, $bill->participants()->count());
+
+        $participants = $bill->participants()->orderBy('sort_order')->get();
+        [$owner, $friend] = [$participants[0], $participants[1]];
 
         // 4. Allocate the single item to the owner.
         $item = $bill->items()->firstOrFail();

@@ -169,7 +169,7 @@
                         <div class="flex items-start justify-between gap-3 px-4 py-2.5">
                             <div class="min-w-0">
                                 <p class="text-[11px] font-semibold text-ink">{{ $item->name }}</p>
-                                <p class="mt-0.5 text-[9.5px] text-muted">{{ $item->quantity }} x {{ format_rupiah($item->unit_price) }} · {{ $allocationText }}</p>
+                                <p class="mt-0.5 text-[9.5px] text-muted">{{ $item->quantity }} x {{ format_rupiah($item->unit_price) }} · {{ $allocationText }}@if ($allocation && $allocation->payer_participant_id) · dibayar {{ $participantNames[$allocation->payer_participant_id] ?? '—' }}@endif</p>
                             </div>
                             <p class="shrink-0 text-[11px] font-bold text-ink hash">{{ format_rupiah($item->total_price) }}</p>
                         </div>
@@ -192,6 +192,20 @@
                     <div class="flex justify-between border-t border-dashed border-line pt-2 text-[12px]"><dt class="font-bold text-ink">Total</dt><dd class="font-extrabold text-primary-dark hash">{{ format_rupiah($bill->grand_total) }}</dd></div>
                 </dl>
             </div>
+
+            @if (count($settlement['transfers']) > 0)
+                <div class="card p-4">
+                    <h3 class="text-[12.5px] font-extrabold text-ink">Siapa transfer ke siapa</h3>
+                    <div class="mt-2 space-y-1.5 text-[10.5px]">
+                        @foreach ($settlement['transfers'] as $transfer)
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="min-w-0 truncate text-ink"><b>{{ $transfer['from_name'] }}</b> <span class="text-muted">→</span> <b>{{ $transfer['to_name'] }}</b></span>
+                                <span class="shrink-0 font-extrabold text-primary-dark hash">{{ format_rupiah($transfer['amount']) }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
             <div class="card p-4">
                 <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">Rekening Tujuan</p>

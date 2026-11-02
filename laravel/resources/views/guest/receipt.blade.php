@@ -10,6 +10,15 @@
     $isNeedsFix = $participant->payment_status === 'needs_fix';
     $isReporting = $isWaiting || $isNeedsFix;
 
+    $myBalance = $settlement['balances'][$participant->id] ?? null;
+    $paidAmount = $myBalance['paid'] ?? ($share?->paid_amount ?? 0);
+    $balance = $myBalance['balance'] ?? 0;
+    $settlementTransfers = collect($settlement['transfers'] ?? []);
+    $myTransfers = $settlementTransfers->where('from_id', $participant->id);
+    $incomingTransfers = $settlementTransfers->where('to_id', $participant->id);
+    $ownerId = $bill->currentParticipant()?->id;
+    $owesOwner = $myTransfers->contains(fn (array $t) => $t['to_id'] === $ownerId);
+
     $bankOptions = ['BCA', 'Bank Mandiri', 'BNI', 'BRI', 'QRIS', 'GoPay', 'OVO', 'DANA', 'ShopeePay'];
     $defaultMethod = $defaultBank?->bank && in_array($defaultBank->bank, $bankOptions, true)
         ? $defaultBank->bank
@@ -98,6 +107,51 @@
                 <span class="text-[22px] font-extrabold tracking-tight text-primary hash">{{ format_rupiah($share->final_total) }}</span>
             </div>
 
+            <div class="border-b border-dashed border-line py-4">
+                <div class="flex items-center justify-between text-[11.5px]">
+                    <span class="text-muted">Kamu membayar (keluar uang)</span>
+                    <span class="font-bold text-ink hash">{{ format_rupiah($paidAmount) }}</span>
+                </div>
+                <div class="mt-1 flex items-center justify-between text-[11.5px]">
+                    <span class="text-muted">Jatah kamu</span>
+                    <span class="font-bold text-ink hash">{{ format_rupiah($share->final_total) }}</span>
+                </div>
+                <div class="mt-2">
+                    @if ($balance < 0)
+                        <span class="badge badge-warning">Kurang {{ format_rupiah(-$balance) }}</span>
+                    @elseif ($balance > 0)
+                        <span class="badge badge-success">Kembali {{ format_rupiah($balance) }}</span>
+                    @else
+                        <span class="badge badge-neutral">Lunas</span>
+                    @endif
+                </div>
+
+                @if ($balance < 0 && $myTransfers->isNotEmpty())
+                    <div class="mt-3 space-y-1.5">
+                        <p class="text-[9.5px] font-bold uppercase tracking-[0.12em] text-muted">Transfer ke</p>
+                        @foreach ($myTransfers as $t)
+                            <div class="flex items-center justify-between gap-2 rounded-xl border border-line bg-[#f8faf9] px-2.5 py-2 text-[11px]">
+                                <span class="font-semibold text-ink"><b>{{ $t['to_name'] }}</b></span>
+                                <span class="font-extrabold text-primary-dark hash">{{ format_rupiah($t['amount']) }}</span>
+                            </div>
+                            @if ($t['to_id'] === $ownerId && $defaultBank)
+                                <p class="px-1 text-[9.5px] text-muted">rekening {{ $defaultBank->bank }} {{ $defaultBank->account_number }} a.n. {{ $defaultBank->account_holder }}</p>
+                            @endif
+                        @endforeach
+                    </div>
+                @elseif ($balance > 0 && $incomingTransfers->isNotEmpty())
+                    <div class="mt-3 space-y-1.5">
+                        <p class="text-[9.5px] font-bold uppercase tracking-[0.12em] text-muted">Kamu menerima dari</p>
+                        @foreach ($incomingTransfers as $t)
+                            <div class="flex items-center justify-between gap-2 rounded-xl border border-line bg-[#f8faf9] px-2.5 py-2 text-[11px]">
+                                <span class="font-semibold text-ink"><b>{{ $t['from_name'] }}</b></span>
+                                <span class="font-extrabold text-ink hash">{{ format_rupiah($t['amount']) }}</span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+
             <div class="pt-4">
                 @if ($isPaid)
                     <div class="flex items-center justify-center gap-2 rounded-2xl border border-primary/25 bg-light/60 p-3 text-[11.5px] font-bold text-primary-dark">
@@ -139,7 +193,7 @@
                         </button>
                     </form>
                 @else
-                    @if ($defaultBank)
+                    @if ($defaultBank && $owesOwner)
                         <div class="rounded-2xl border border-line bg-[#f8faf9] p-3.5">
                             <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">Silakan transfer ke</p>
                             <p class="mt-1 text-[13px] font-extrabold text-ink">{{ $defaultBank->bank }} · <span class="hash">{{ $defaultBank->account_number }}</span></p>
@@ -189,5 +243,9 @@
     @endif
 
     <p class="mt-4 text-center text-[10px] text-muted">Dibuat otomatis oleh PatunganBeres · Bagi tagihan tanpa drama.</p>
+
+    <button type="button" class="no-print btn btn-outline mt-3 w-full justify-center" onclick="window.print()">
+        <i data-lucide="printer" class="h-4 w-4"></i> Cetak struk
+    </button>
 </div>
 @endsection

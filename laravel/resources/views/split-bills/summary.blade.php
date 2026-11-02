@@ -19,6 +19,105 @@
         </div>
     @endif
 
+    @if (count($result['unallocated_item_ids']) === 0 && count($result['balances']) > 0)
+        <section class="card overflow-hidden">
+            <div class="flex items-center justify-between border-b border-line px-4 py-3">
+                <div>
+                    <h3 class="text-[13px] font-extrabold text-ink">Pembayaran &amp; Transfer</h3>
+                    <p class="mt-0.5 text-[10.5px] text-muted">Siapa sudah keluar uang, siapa yang kurang, dan ke siapa harus transfer.</p>
+                </div>
+                <span class="badge badge-neutral">{{ count($result['transfers']) }} transfer</span>
+            </div>
+
+            <div class="grid gap-4 p-4 lg:grid-cols-2">
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">1. Rincian pembayaran</p>
+                    <div class="mt-2 overflow-hidden rounded-xl border border-line">
+                        <table class="w-full text-[10.5px]">
+                            <thead class="bg-[#f8faf9] text-left text-[9.5px] uppercase tracking-wide text-muted">
+                                <tr>
+                                    <th class="px-3 py-2 font-bold">Nama</th>
+                                    <th class="px-3 py-2 text-right font-bold">Dibayar</th>
+                                    <th class="px-3 py-2 text-right font-bold">Jatah</th>
+                                    <th class="px-3 py-2 text-right font-bold">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-line">
+                                @foreach ($bill->participants as $participant)
+                                    @php $bal = $result['balances'][$participant->id] ?? null; @endphp
+                                    @if ($bal)
+                                        <tr>
+                                            <td class="px-3 py-2 font-semibold text-ink">{{ $participant->name }}</td>
+                                            <td class="px-3 py-2 text-right font-bold text-ink hash">{{ format_rupiah($bal['paid']) }}</td>
+                                            <td class="px-3 py-2 text-right font-bold text-ink hash">{{ format_rupiah($bal['owed']) }}</td>
+                                            <td class="px-3 py-2 text-right">
+                                                @if ($bal['balance'] < 0)
+                                                    <span class="badge badge-warning">Kurang {{ format_rupiah(-$bal['balance']) }}</span>
+                                                @elseif ($bal['balance'] > 0)
+                                                    <span class="badge badge-success">Kembali {{ format_rupiah($bal['balance']) }}</span>
+                                                @else
+                                                    <span class="badge badge-neutral">Lunas</span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">2. Siapa transfer ke siapa?</p>
+                    <div class="mt-2 overflow-hidden rounded-xl border border-line">
+                        <table class="w-full text-[10.5px]">
+                            <thead class="bg-[#f8faf9] text-left text-[9.5px] uppercase tracking-wide text-muted">
+                                <tr>
+                                    <th class="px-3 py-2 font-bold">Dari</th>
+                                    <th class="px-3 py-2 font-bold">Kepada</th>
+                                    <th class="px-3 py-2 text-right font-bold">Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-line">
+                                @forelse ($result['transfers'] as $transfer)
+                                    <tr>
+                                        <td class="px-3 py-2 font-semibold text-ink">{{ $transfer['from_name'] }}</td>
+                                        <td class="px-3 py-2 font-semibold text-ink">{{ $transfer['to_name'] }}</td>
+                                        <td class="px-3 py-2 text-right font-bold text-primary-dark hash">{{ format_rupiah($transfer['amount']) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="3" class="px-3 py-3 text-center text-[10px] text-muted">Tidak ada transfer — semua sudah pas.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-line bg-[#f8faf9] px-4 py-3">
+                <p class="text-[10px] font-bold uppercase tracking-[0.12em] text-muted">3. Kesimpulan</p>
+                <div class="mt-2 space-y-1">
+                    @foreach ($result['balances'] as $balanceId => $bal)
+                        @php
+                            $person = $bill->participants->firstWhere('id', $balanceId);
+                        @endphp
+                        <div class="flex items-center gap-2 rounded-lg bg-white px-2.5 py-1.5 text-[10.5px]">
+                            <span class="avatar-initial h-5 w-5 text-[7px]" style="background: {{ $person?->color ?? '#16A34A' }}">{{ $person?->initials ?? 'P' }}</span>
+                            <span class="min-w-0 flex-1 truncate font-semibold text-ink">{{ $person?->name ?? 'Peserta' }}</span>
+                            @if ($bal['balance'] < 0)
+                                <span class="shrink-0 font-bold text-warning">Transfer {{ format_rupiah(-$bal['balance']) }}</span>
+                            @elseif ($bal['balance'] > 0)
+                                <span class="shrink-0 font-bold text-primary-dark">Terima {{ format_rupiah($bal['balance']) }}</span>
+                            @else
+                                <span class="shrink-0 font-semibold text-muted">Lunas</span>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        </section>
+    @endif
+
     <div class="grid gap-4 lg:grid-cols-[1.45fr_1fr]">
         <div class="space-y-3">
             <section class="card overflow-hidden">

@@ -215,6 +215,9 @@ class SplitBill extends Model
             $newAllocation->single_participant_id = $allocation->single_participant_id
                 ? ($participantMap[$allocation->single_participant_id] ?? null)
                 : null;
+            $newAllocation->payer_participant_id = $allocation->payer_participant_id
+                ? ($participantMap[$allocation->payer_participant_id] ?? null)
+                : null;
 
             if (is_array($allocation->shared_participant_ids)) {
                 $newAllocation->shared_participant_ids = array_values(array_filter(array_map(

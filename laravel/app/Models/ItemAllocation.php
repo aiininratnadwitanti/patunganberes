@@ -12,6 +12,7 @@ class ItemAllocation extends Model
         'receipt_item_id',
         'type',
         'single_participant_id',
+        'payer_participant_id',
         'shared_participant_ids',
         'portion_assignments',
     ];
@@ -37,5 +38,10 @@ class ItemAllocation extends Model
     public function singleParticipant(): BelongsTo
     {
         return $this->belongsTo(BillParticipant::class, 'single_participant_id');
+    }
+
+    public function payer(): BelongsTo
+    {
+        return $this->belongsTo(BillParticipant::class, 'payer_participant_id');
     }
 }
